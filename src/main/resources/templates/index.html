@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Screening AI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+        }
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid rgba(0, 0, 0, 0.125);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="fas fa-robot me-2"></i>Resume Screening AI
+        </a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" href="/results">
+                <i class="fas fa-chart-line me-1"></i>View Results
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <!-- Alert Messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i><span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${warning}" class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i><span th:text="${warning}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row">
+
+        <!-- Statistics Card -->
+        <div class="col-lg-4 mb-4" th:if="${stats != null and stats.totalCandidates > 0}">
+
+        <div class="card stats-card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-pie me-2"></i>Statistics
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h3 th:text="${stats.totalCandidates}">0</h3>
+                            <small>Total Candidates</small>
+                        </div>
+                        <div class="col-6">
+                            <h3 th:text="${stats.qualifiedCandidates}">0</h3>
+                            <small>Qualified (≥60%)</small>
+                        </div>
+                    </div>
+                    <hr class="text-white">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 th:text="${#numbers.formatDecimal(stats.averageScore, 1, 1)} + '%'">0%</h4>
+                            <small>Avg Score</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 th:text="${stats.emailsSent}">0</h4>
+                            <small>Emails Sent</small>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/results" class="btn btn-light btn-sm me-2">
+                            <i class="fas fa-eye me-1"></i>View Results
+                        </a>
+                        <form method="post" action="/clear" style="display: inline;"
+                              onsubmit="return confirm('Are you sure you want to clear all data?')">
+                            <button type="submit" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-trash me-1"></i>Clear Data
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Form -->
+        <div th:class="${stats != null and stats.totalCandidates > 0} ? 'col-lg-8' : 'col-12'">
+
+        <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-upload me-2"></i>Upload Job Description & Resumes
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" th:action="@{/upload}" enctype="multipart/form-data" id="uploadForm">
+
+
+                    <!-- Job Description -->
+                        <div class="mb-4">
+                            <label for="jobDescription" class="form-label">
+                                <i class="fas fa-briefcase me-2"></i>Job Description
+                            </label>
+                            <textarea class="form-control" id="jobDescription" name="jobDescription"
+                                      rows="8" placeholder="Paste the complete job description here...&#10;&#10;Example:&#10;We are looking for a Senior Java Developer with experience in:&#10;- Java 8+, Spring Boot&#10;- RESTful APIs, Microservices&#10;- MySQL, PostgreSQL&#10;- Docker, Kubernetes&#10;- AWS, Jenkins&#10;- Agile methodologies" required></textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Include all required skills, technologies, and qualifications.
+                            </div>
+                        </div>
+
+                        <!-- Resume Files Upload -->
+                        <div class="mb-4">
+                            <label for="resumeFiles" class="form-label">
+                                <i class="fas fa-file-pdf me-2"></i>Resume Files (PDF)
+                            </label>
+                            <div class="upload-area">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5>Upload PDF Resumes</h5>
+                                <p class="text-muted">Select multiple PDF files or drag & drop them here</p>
+                                <input type="file" class="form-control" id="resumeFiles" name="resumeFiles"
+                                       multiple accept=".pdf" required>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Only PDF files are supported. Maximum 10MB per file.
+                            </div>
+                        </div>
+
+                        <!-- File List Display -->
+                        <div id="fileList" class="mb-3" style="display: none;">
+                            <h6><i class="fas fa-list me-2"></i>Selected Files:</h6>
+                            <ul id="selectedFiles" class="list-group list-group-flush"></ul>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="fas fa-brain me-2"></i>Process Resumes with AI
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How it Works Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>How It Works
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center"
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-upload fa-lg"></i>
+                            </div>
+                            <h5 class="mt-3">1. Upload</h5>
+                            <p class="text-muted">Upload job description and PDF resumes</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center"
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-robot fa-lg"></i>
+                            </div>
+                            <h5 class="mt-3">2. AI Analysis</h5>
+                            <p class="text-muted">GPT extracts skills and candidate info</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="rounded-circle bg-warning text-white d-inline-flex align-items-center justify-content-center"
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-chart-line fa-lg"></i>
+                            </div>
+                            <h5 class="mt-3">3. Scoring</h5>
+                            <p class="text-muted">Match score calculated (0-100%)</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="rounded-circle bg-info text-white d-inline-flex align-items-center justify-content-center"
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-email fa-lg"></i>
+                            </div>
+                            <h5 class="mt-3">4. Notify</h5>
+                            <p class="text-muted">Auto-email qualified candidates (≥60%)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // File upload handling
+    const fileInput = document.getElementById('resumeFiles');
+    const fileList = document.getElementById('fileList');
+    const selectedFiles = document.getElementById('selectedFiles');
+    const submitBtn = document.getElementById('submitBtn');
+    const uploadForm = document.getElementById('uploadForm');
+
+    fileInput.addEventListener('change', function() {
+        const files = Array.from(this.files);
+
+        if (files.length > 0) {
+            fileList.style.display = 'block';
+            selectedFiles.innerHTML = '';
+
+            files.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <div>
+                        <i class="fas fa-file-pdf text-danger me-2"></i>
+                        <span>${file.name}</span>
+                        <small class="text-muted ms-2">(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">${index + 1}</span>
+                `;
+                selectedFiles.appendChild(li);
+            });
+        } else {
+            fileList.style.display = 'none';
+        }
+    });
+
+    // Form submission handling
+    uploadForm.addEventListener('submit', function(e) {
+        const jobDesc = document.getElementById('jobDescription').value.trim();
+        const files = fileInput.files;
+
+        if (!jobDesc) {
+            e.preventDefault();
+            alert('Please enter a job description.');
+            return;
+        }
+
+        if (files.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one PDF resume file.');
+            return;
+        }
+
+        // Show loading state
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing... Please Wait';
+        submitBtn.disabled = true;
+
+        // Show progress
+        const progressDiv = document.createElement('div');
+        progressDiv.innerHTML = `
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-cog fa-spin me-2"></i>
+                <strong>Processing resumes...</strong> This may take a few minutes depending on the number of files.
+            </div>
+        `;
+        uploadForm.appendChild(progressDiv);
+    });
+
+    // Drag and drop functionality
+    const uploadArea = document.querySelector('.upload-area');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        uploadArea.style.borderColor = '#0d6efd';
+        uploadArea.style.backgroundColor = '#f8f9fa';
+    }
+
+    function unhighlight(e) {
+        uploadArea.style.borderColor = '#dee2e6';
+        uploadArea.style.backgroundColor = '';
+    }
+
+    uploadArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        // Filter only PDF files
+        const pdfFiles = Array.from(files).filter(file =>
+            file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+        );
+
+        if (pdfFiles.length > 0) {
+            // Create new FileList with only PDF files
+            const dataTransfer = new DataTransfer();
+            pdfFiles.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+
+            // Trigger change event
+            fileInput.dispatchEvent(new Event('change'));
+        } else {
+            alert('Please drop only PDF files.');
+        }
+    }
+
+    // Auto-dismiss alerts after 5 seconds
+    document.querySelectorAll('.alert').forEach(alert => {
+        setTimeout(() => {
+            if (alert.querySelector('.btn-close')) {
+                alert.querySelector('.btn-close').click();
+            }
+        }, 5000);
+    });
+</script>
+</body>
+</html>

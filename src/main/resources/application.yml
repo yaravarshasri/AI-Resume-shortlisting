@@ -1,0 +1,65 @@
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: // Your mail id
+    password: //password get it from the google
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  datasource:
+    url: jdbc:h2:mem:resumedb
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+    platform: h2
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+      enabled: true
+
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+
+server:
+  port: 8080
+
+gemini:
+  api:
+    key:
+    url:
+
+
+logging:
+  level:
+    com.resumeai: INFO
+    org.springframework.mail: DEBUG
+    org.hibernate.SQL: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
