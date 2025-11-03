@@ -48,8 +48,8 @@ server:
 
 gemini:
   api:
-    key:
-    url:
+    key: // get api key from Gemini Ai and set it here
+    url: // get the Url of the Gemini Ai and set it here
 
 
 logging:
